@@ -13,7 +13,9 @@ logger = logging.getLogger("cimet.deps")
 @lru_cache
 def get_orchestrator() -> ConversationOrchestrator:
     settings = get_settings()
-    llm_client = build_llm_client(settings.llm_provider, settings.llm_api_key, settings.llm_model)
+    llm_client = build_llm_client(
+        settings.llm_provider, settings.llm_api_key, settings.llm_model, settings.llm_base_url
+    )
     return ConversationOrchestrator(llm_client)
 
 

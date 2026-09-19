@@ -1,3 +1,16 @@
+import os
+
+# Tests must never depend on a live LLM call — they always run against
+# RuleBasedLLMClient, per the project's own "no external dependency should
+# block or flake a test" rule. .env may have a real LLM_PROVIDER/LLM_API_KEY
+# configured for manual/demo use (e.g. a live Sarvam or Anthropic key); force
+# both empty here, before anything imports app.config, so pydantic-settings'
+# env-var-overrides-.env-file precedence keeps the whole suite offline and
+# fast regardless of what's sitting in .env. This must run before any
+# `import app...` below, since Settings() is cached on first call.
+os.environ["LLM_API_KEY"] = ""
+os.environ["LLM_PROVIDER"] = ""
+
 import pytest
 
 from app.guardrails import dnc as dnc_module

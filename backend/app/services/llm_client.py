@@ -411,6 +411,149 @@ class AnthropicLLMClient(LLMClient):
             return collected_summary
 
 
+# ---------------------------------------------------------------------------
+# Sarvam AI implementation
+#
+# UNVERIFIED against a live Sarvam account — same status as VapiVoiceProvider
+# (providers/voice/vapi.py) before it was checked against a real key: built
+# against Sarvam's documented OpenAI-compatible chat-completions endpoint
+# (POST {base_url}/chat/completions, Bearer auth, response_format=
+# json_object), but this repo has no live SARVAM_API_KEY to test against.
+# Every call is wrapped so a bad assumption about the exact request/response
+# envelope can only mean a silent fallback to RuleBasedLLMClient, never a
+# broken call — confirm the real shape (auth header name, endpoint path,
+# whether json_object mode is actually supported) against a live key before
+# trusting this in a demo, and fix it here; nothing else should need to change.
+# ---------------------------------------------------------------------------
+
+SARVAM_DEFAULT_BASE_URL = "https://api.sarvam.ai/v1"
+
+
+class SarvamLLMClient(LLMClient):
+    def __init__(self, api_key: str, base_url: str, model: str):
+        import httpx
+
+        self._model = model
+        self._fallback = RuleBasedLLMClient()
+        self._client = httpx.Client(
+            base_url=base_url.rstrip("/"),
+            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+            timeout=15.0,
+        )
+
+    def _chat_json(self, system_prompt: str, user_prompt: str) -> Optional[dict]:
+        import json
+
+        response = self._client.post(
+            "/chat/completions",
+            json={
+                "model": self._model,
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt},
+                ],
+                "temperature": 0,
+                "response_format": {"type": "json_object"},
+            },
+        )
+        response.raise_for_status()
+        content = response.json()["choices"][0]["message"]["content"]
+        try:
+            return json.loads(content)
+        except (ValueError, KeyError):
+            # Some providers wrap JSON in a code fence even when asked not
+            # to — salvage the first {...} block before giving up.
+            match = re.search(r"\{.*\}", content, re.DOTALL)
+            return json.loads(match.group(0)) if match else None
+
+    def extract_fields(
+        self,
+        missing_fields: list[FieldScript],
+        asked_field: Optional[FieldScript],
+        utterance: str,
+        context: str,
+    ) -> ExtractionResult:
+        if not missing_fields:
+            return ExtractionResult(extractions=[])
+        field_descriptions = "\n".join(
+            f"- {f.field}: {f.purpose} (hints: {', '.join(f.extraction_hints)})" for f in missing_fields
+        )
+        system_prompt = (
+            "You extract structured field values from a customer's spoken utterance during a "
+            "phone call. Only extract a field if the utterance actually states it — never guess "
+            "or invent a value. Respond with a JSON object shaped exactly like: "
+            '{"extractions": [{"field": "...", "value": "...", "confidence": 0.0, "evidence": "..."}]}. '
+            "Use an empty list if nothing is extractable."
+        )
+        user_prompt = (
+            f"Conversation so far:\n{context}\n\n"
+            f"Customer just said: \"{utterance}\"\n\n"
+            f"Target fields still missing:\n{field_descriptions}"
+        )
+        try:
+            data = self._chat_json(system_prompt, user_prompt)
+            if data is None:
+                raise ValueError("no JSON object in Sarvam response")
+            return ExtractionResult.model_validate(data)
+        except Exception:
+            logger.exception("Sarvam extract_fields failed; falling back to rule-based extraction")
+            return self._fallback.extract_fields(missing_fields, asked_field, utterance, context)
+
+    def classify_intent(self, utterance: str) -> Intent:
+        system_prompt = (
+            "You classify a phone customer's intent. Respond with a JSON object shaped exactly "
+            'like: {"intent": "...", "confidence": 0.0, "evidence": "..."}. intent must be one of: '
+            "provide_information, request_human, refuse_decline, anger_frustration, payment_mention, "
+            "advice_request, confusion, generic_question, other. "
+            "Calibrate confidence honestly: use a low confidence (below 0.5) when the utterance is "
+            "ambiguous, hedged (\"I think\", \"not sure\", \"maybe\"), garbled, or could plausibly fit "
+            "more than one intent. Reserve high confidence for clear, unambiguous utterances."
+        )
+        try:
+            data = self._chat_json(system_prompt, f'Customer said: "{utterance}"')
+            if data is None:
+                raise ValueError("no JSON object in Sarvam response")
+            return Intent.model_validate(data)
+        except Exception:
+            logger.exception("Sarvam classify_intent failed; falling back to rule-based classification")
+            return self._fallback.classify_intent(utterance)
+
+    def detect_escalation_signal(self, utterance: str, recent_context: str) -> EscalationSignal:
+        try:
+            # Kept conservative, same reasoning as AnthropicLLMClient: anger/
+            # off-script nuance could benefit from the LLM, but the
+            # deterministic keyword pass is trusted as the floor for now.
+            return self._fallback.detect_escalation_signal(utterance, recent_context)
+        except Exception:
+            logger.exception("Sarvam detect_escalation_signal failed; falling back")
+            return self._fallback.detect_escalation_signal(utterance, recent_context)
+
+    def summarize(self, transcript_text: str, collected_summary: str) -> str:
+        try:
+            response = self._client.post(
+                "/chat/completions",
+                json={
+                    "model": self._model,
+                    "messages": [
+                        {
+                            "role": "user",
+                            "content": (
+                                "Summarise this customer service call in 2-3 sentences for a human "
+                                f"agent who is about to take over:\n\n{transcript_text}"
+                            ),
+                        }
+                    ],
+                    "temperature": 0,
+                },
+            )
+            response.raise_for_status()
+            content = response.json()["choices"][0]["message"]["content"]
+            return content.strip() if content and content.strip() else collected_summary
+        except Exception:
+            logger.exception("Sarvam summarize failed; falling back to deterministic summary")
+            return collected_summary
+
+
 def build_llm_client(
     provider: str, api_key: str, model: str, base_url: str = ""
 ) -> LLMClient:

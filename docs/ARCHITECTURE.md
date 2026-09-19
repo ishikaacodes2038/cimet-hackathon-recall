@@ -89,18 +89,31 @@ microphone, and the voice layer is a thin, swappable adapter.
 ## 4. The LLM layer — and why the app doesn't fall over without one
 
 `backend/app/services/llm_client.py` defines one interface, `LLMClient`,
-with two implementations:
+with three implementations, selected by `LLM_PROVIDER`:
 
 - **`RuleBasedLLMClient`** — deterministic keyword/regex matching, no
   network call, no API key. This is the *default* when `LLM_API_KEY` isn't
   set, and it's also what every automated test runs against (tests must
   never depend on a live API call or be flaky because of one).
-- **`AnthropicLLMClient`** — real Claude calls using **tool-calling /
-  structured output** (the `tools` + `tool_choice` parameters on the Messages
-  API), so the model's response is always a validated JSON object, never
-  free text that has to be parsed hopefully. If a live call throws for any
-  reason (network, rate limit, bad key), it **catches the exception and
-  falls back to the rule-based client** rather than breaking the call.
+- **`AnthropicLLMClient`** (`LLM_PROVIDER=anthropic`) — real Claude calls
+  using **tool-calling / structured output** (the `tools` + `tool_choice`
+  parameters on the Messages API), so the model's response is always a
+  validated JSON object, never free text that has to be parsed hopefully.
+  If a live call throws for any reason (network, rate limit, bad key), it
+  **catches the exception and falls back to the rule-based client** rather
+  than breaking the call.
+- **`SarvamLLMClient`** (`LLM_PROVIDER=sarvam`) — real calls to Sarvam AI's
+  OpenAI-compatible chat-completions endpoint (`LLM_BASE_URL`), prompted for
+  a strict JSON object instead of using tool-calling (Sarvam's tool-calling
+  support wasn't confirmed at build time). Same fallback-on-any-exception
+  wrapping as the Anthropic client. **Unverified against a live account** —
+  built against Sarvam's documented API shape (Bearer auth, `/chat/completions`,
+  `response_format: json_object`) but never exercised against a real key in
+  this build environment, the same status Vapi's voice provider was in
+  before §12's live-key check. Confirm the exact envelope (auth header name,
+  whether `json_object` mode is actually honored, the real model name) once
+  a key is pasted into `.env`, and fix only inside `SarvamLLMClient` if it
+  differs — nothing else should need to change.
 
 Both implementations answer exactly four questions, and nothing else:
 1. `extract_fields` — does this utterance contain a value for any of the

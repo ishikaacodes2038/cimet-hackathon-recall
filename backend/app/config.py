@@ -18,9 +18,10 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:5173"
 
     # LLM
-    llm_provider: str = "anthropic"
+    llm_provider: str = "anthropic"  # "anthropic" | "sarvam"
     llm_model: str = "claude-sonnet-5"
     llm_api_key: str = ""
+    llm_base_url: str = ""  # only used by providers that need one (e.g. "sarvam")
 
     # Voice provider
     voice_provider: str = "mock"  # "mock" | "vapi"
