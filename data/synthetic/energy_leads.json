@@ -1,0 +1,41 @@
+[
+  {
+    "lead_id": "LEAD-1001",
+    "first_name": "Priya",
+    "phone": "+61411111111",
+    "email": "priya.sharma@example.test",
+    "last_activity_date": "YESTERDAY",
+    "last_completed_step": "IDENTITY",
+    "prefilled_fields": { "full_name": "Priya Sharma" }
+  },
+  {
+    "lead_id": "LEAD-1002",
+    "first_name": "Alex",
+    "phone": "+61411111112",
+    "email": "alex.wong@example.test",
+    "last_activity_date": "MONDAY",
+    "last_completed_step": "PROPERTY",
+    "prefilled_fields": {
+      "full_name": "Alex Wong",
+      "address": "12 Smith Street, Richmond VIC 3121"
+    }
+  },
+  {
+    "lead_id": "LEAD-1003",
+    "first_name": "Test",
+    "phone": "+61400000001",
+    "email": "dnc.test@example.test",
+    "last_activity_date": "TWO_DAYS_AGO",
+    "last_completed_step": "START",
+    "prefilled_fields": {}
+  },
+  {
+    "lead_id": "LEAD-1004",
+    "first_name": "Jordan",
+    "phone": "+61411111114",
+    "email": "jordan.lee@example.test",
+    "last_activity_date": "TODAY",
+    "last_completed_step": "START",
+    "prefilled_fields": {}
+  }
+]

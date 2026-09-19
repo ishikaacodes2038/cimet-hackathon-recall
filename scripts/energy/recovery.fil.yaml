@@ -1,0 +1,236 @@
+# Filipino/Tagalog translation of recovery.en.yaml — same field keys,
+# validation types, retry limits and canonical enum options (kept in English
+# so stored/submitted data stays consistent regardless of call language).
+
+vertical: energy
+
+consent_line: >
+  Kumusta {first_name}, tumatawag ako mula sa CIMET tungkol sa energy comparison
+  na sinimulan mo noong {last_activity_date}. Ang tawag na ito ay ire-record para
+  sa quality at training purposes. Okay lang ba na magpatuloy tayo?
+
+handoff_line: >
+  Isasama ko na ang isang katrabaho na makakatulong sa iyo nang direkta —
+  makikita niya ang lahat ng napag-usapan natin, kaya hindi mo na kailangang
+  ulitin ang kahit ano.
+
+phrases:
+  consent_grant_ack: "Salamat, ang galing."
+  resume_ack_with_prefill: >
+    Salamat — nakikita kong mayroon na kaming ilan sa iyong detalye, kaya ang
+    itatanong ko na lang ay ang mga kulang pa.
+  advice_refusal: >
+    Hindi ako makakapagrekomenda ng partikular na plano para sa iyo —
+    kokolektahin ko lang ang iyong mga detalye para makagawa ang aming system
+    ng comparison. May makakausap ka pagkatapos tungkol sa mga opsyon.
+    Magpatuloy na lang ba tayo sa ilang detalye pa?
+  payment_refusal: >
+    Hindi ako maaaring kumuha ng bayad o detalye ng card sa tawag na ito —
+    hindi ito hinahawakan dito para sa iyong seguridad. Magpapadala ako sa iyo
+    ng secure na link para ilagay mo mismo ang iyong payment details, at
+    ikokonekta kita sa taong makakatulong sa iba pang bagay.
+  hard_refusal_close: >
+    Naiintindihan ko — salamat sa pagsasabi. Naitala ko na ang iyong
+    kagustuhan at hindi na ako tatawag ulit tungkol dito. Magandang araw sa iyo.
+  busy_reschedule: >
+    Walang problema — hahayaan na kita. Puwede nating subukan ulit sa ibang
+    pagkakataon kung mas maganda iyon para sa iyo.
+  confirmation_question: >
+    Para lang makumpirma — kumpleto na ang lahat ng kailangan ko. Isusumite
+    ko na ba ang comparison na ito para sa iyo?
+  confirmation_decline: "Walang problema — hindi ko isusumite ang kahit ano. Salamat sa oras mo."
+  capture_fallback_offer: >
+    Medyo nahihirapan akong maintindihan nang tama — paalala lang, ang tawag na ito ay
+    para tapusin ang iyong energy comparison, kaya kailangan ko talaga ito. Puwede mo itong i-type,
+    o maaari kitang ikonekta sa taong makakatulong.
+  field_reconfirm_template: "Narinig ko '{value}' — tama ba iyon?"
+  capture_soft_redirect_template: "Walang problema, {first_name} — ayusin natin iyan. {question}"
+  generic_question_ack: >
+    Magandang tanong — ako ay isang automated assistant na tumatawag para sa CIMET tungkol
+    sa energy comparison na sinimulan mo. Ang tawag na ito ay nirerekord para sa quality at training purposes.
+  submission_success_template: >
+    Tapos na — naisumite ko na ang iyong energy comparison (reference
+    {submission_id}). Malalaman mo na lang ang mga opsyon sa madaling
+    panahon. Salamat sa oras mo, {first_name}!
+
+# Translations for the canonical last_activity_date tokens used in the
+# consent opener — never interpolate raw English prose into this sentence.
+relative_date_labels:
+  TODAY: "kanina"
+  YESTERDAY: "kahapon"
+  TWO_DAYS_AGO: "dalawang araw na ang nakalipas"
+  MONDAY: "Lunes"
+  LAST_CALLBACK_ATTEMPT: "sa huli naming pagtatangka na makontak ka"
+
+sections:
+  - name: IDENTITY
+    opening_line: "Kumpirmahin muna natin ang ilang detalye."
+    fields: [full_name, date_of_birth]
+
+  - name: PROPERTY
+    opening_line: "Ngayon, pag-usapan natin ang property na gusto mong i-compare ang energy plans."
+    fields: [address, property_type]
+
+  - name: ENERGY_USAGE
+    opening_line: "Ilang tanong tungkol sa kasalukuyan mong energy setup."
+    fields: [current_provider, fuel_type, nmi_or_mirn, average_quarterly_usage]
+
+  - name: SAFETY_CONCESSION
+    opening_line: "Dalawang mahalagang tanong lang na kailangan nating itanong sa lahat."
+    fields: [concession_status, life_support_status]
+
+  - name: PREFERENCES
+    opening_line: "Huling bagay — mayroon ka bang gustong paraan para sa follow-up?"
+    fields: [move_in_date, preferred_contact_time]
+
+fields:
+  full_name:
+    field: full_name
+    section: IDENTITY
+    purpose: Confirm the account holder's name for identity match.
+    question: "Maaari mo bang kumpirmahin ang buong pangalan sa account?"
+    clarification_question: "Paumanhin, maaari mo bang i-spell out ang iyong pangalan at apelyido?"
+    validation:
+      type: non_empty
+    extraction_hints: ["a person's full name, first and last"]
+    max_retries: 2
+    required: true
+
+  date_of_birth:
+    field: date_of_birth
+    section: IDENTITY
+    purpose: Identity verification and concession eligibility.
+    question: "At ang iyong petsa ng kapanganakan, pakiusap?"
+    clarification_question: "Maaari mo bang sabihin iyon bilang araw, buwan, at taon?"
+    validation:
+      type: date
+    extraction_hints: ["a date of birth"]
+    max_retries: 2
+    required: true
+
+  address:
+    field: address
+    section: PROPERTY
+    purpose: Service address for the energy comparison.
+    question: "Ano ang address ng property na gusto mong i-compare namin ang mga plano?"
+    clarification_question: "Maaari mo bang ibigay ang numero ng bahay, pangalan ng kalye, suburb, at postcode?"
+    validation:
+      type: non_empty
+    extraction_hints: ["a street address including suburb and postcode"]
+    max_retries: 2
+    required: true
+
+  property_type:
+    field: property_type
+    section: PROPERTY
+    purpose: Residential vs business changes the plan set offered.
+    question: "Iyan ba ay residential o business na property?"
+    clarification_question: "Para lang malinaw — ito ba ay bahay mo, o isang lugar ng negosyo?"
+    validation:
+      type: enum
+      options: ["residential", "business"]
+    extraction_hints: ["residential or business"]
+    max_retries: 2
+    required: true
+
+  current_provider:
+    field: current_provider
+    section: ENERGY_USAGE
+    purpose: Baseline for the comparison.
+    question: "Sino ang kasalukuyan mong energy provider?"
+    clarification_question: "Walang problema — kanino ka kasalukuyang nagbabayad ng iyong energy bill?"
+    validation:
+      type: non_empty
+    extraction_hints: ["the name of an energy retailer/company"]
+    max_retries: 2
+    required: true
+
+  fuel_type:
+    field: fuel_type
+    section: ENERGY_USAGE
+    purpose: Determines whether we ask for an NMI (electricity) or MIRN (gas).
+    question: "Ang property ba ay de-kuryente, de-gas, o pareho?"
+    clarification_question: "Kuryente lang, gas lang, o dual fuel — alin dito?"
+    validation:
+      type: enum
+      options: ["electricity", "gas", "dual"]
+    extraction_hints: ["electricity, gas, or dual/both"]
+    max_retries: 2
+    required: true
+
+  nmi_or_mirn:
+    field: nmi_or_mirn
+    section: ENERGY_USAGE
+    purpose: Meter identifier needed to generate an accurate comparison.
+    question: "Mayroon ka bang NMI o MIRN number — iyon ang meter number sa iyong resibo?"
+    clarification_question: "Karaniwan itong 10-11 digit na numero sa taas ng iyong bill na may label na NMI o MIRN."
+    validation:
+      type: non_empty
+    extraction_hints: ["a meter identifier, typically 10-11 digits/characters"]
+    max_retries: 1
+    required: false
+
+  average_quarterly_usage:
+    field: average_quarterly_usage
+    section: ENERGY_USAGE
+    purpose: Usage estimate improves comparison accuracy but isn't blocking.
+    question: "Humigit-kumulang magkano ang average quarterly bill mo?"
+    clarification_question: "Tinatayang halaga lang ay okay na — malapit ba ito sa $200, $400, o $600+?"
+    validation:
+      type: non_empty
+    extraction_hints: ["a dollar amount or usage estimate"]
+    max_retries: 1
+    required: false
+
+  concession_status:
+    field: concession_status
+    section: SAFETY_CONCESSION
+    purpose: Regulatory requirement — concession eligibility affects plan eligibility.
+    question: "May hawak ka bang government concession card?"
+    clarification_question: "Ibig sabihin ay Pensioner Concession Card, Health Care Card o katulad nito — oo o hindi?"
+    validation:
+      type: yes_no
+    extraction_hints: ["yes or no"]
+    max_retries: 2
+    required: true
+    safety_critical: false
+
+  life_support_status:
+    field: life_support_status
+    section: SAFETY_CONCESSION
+    purpose: >
+      Regulatory safety requirement. A "yes" here means the household depends on
+      life-support equipment — vulnerable-customer signal, must hand back to a human.
+    question: "May tao ba sa property na umaasa sa life-support equipment?"
+    clarification_question: "Ito ay kinakailangang safety check lang — oo o hindi na lang."
+    validation:
+      type: yes_no
+    extraction_hints: ["yes or no"]
+    max_retries: 2
+    required: true
+    safety_critical: true
+    escalate_on_values: ["yes"]
+
+  move_in_date:
+    field: move_in_date
+    section: PREFERENCES
+    purpose: Relevant only for a new connection.
+    question: "Ito ba ay para sa bagong lilipatan, o sa kasalukuyan mong address?"
+    clarification_question: "Kung bagong lilipatan, humigit-kumulang kailan ka lilipat?"
+    validation:
+      type: non_empty
+    extraction_hints: ["a date, or 'existing address' / 'not moving'"]
+    max_retries: 1
+    required: false
+
+  preferred_contact_time:
+    field: preferred_contact_time
+    section: PREFERENCES
+    purpose: Improves follow-up quality; not blocking.
+    question: "May gusto ka bang oras na pinakamadaling ma-contact ka kung kailangan naming mag-follow up?"
+    clarification_question: "Umaga, hapon, o gabi — kung alin ang pinakamadali para sa iyo."
+    validation:
+      type: non_empty
+    extraction_hints: ["a time of day or day of week preference"]
+    max_retries: 1
+    required: false

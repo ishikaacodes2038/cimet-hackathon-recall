@@ -1,0 +1,233 @@
+# Hindi translation of recovery.en.yaml — same field keys, validation types,
+# retry limits and canonical enum options (kept in English so stored/submitted
+# data stays consistent for downstream systems regardless of which language
+# the call was conducted in). Only customer-facing text is translated.
+
+vertical: energy
+
+consent_line: >
+  नमस्ते {first_name}, मैं CIMET से बात कर रही हूं। आपने {last_activity_date}
+  को जो एनर्जी तुलना शुरू की थी, उसी बारे में कॉल कर रही हूं। यह कॉल गुणवत्ता और
+  प्रशिक्षण उद्देश्यों के लिए रिकॉर्ड की जा रही है। क्या मैं आगे बढ़ सकती हूं?
+
+handoff_line: >
+  मैं अपने एक सहयोगी को इस कॉल में शामिल कर रही हूं जो आपकी सीधे मदद करेंगे —
+  उन्हें अब तक की सारी जानकारी मिल जाएगी, तो आपको कुछ भी दोबारा बताने की जरूरत नहीं होगी।
+
+phrases:
+  consent_grant_ack: "बहुत बढ़िया, धन्यवाद।"
+  resume_ack_with_prefill: >
+    बहुत बढ़िया, धन्यवाद — मैं देख सकती हूं कि आपकी कुछ जानकारी पहले से हमारे पास
+    है, तो मैं सिर्फ बाकी बची जानकारी पूछूंगी।
+  advice_refusal: >
+    मैं आपके लिए कोई खास प्लान सुझा नहीं सकती — मैं सिर्फ आपकी जानकारी इकट्ठा कर
+    सकती हूं ताकि हमारा सिस्टम तुलना तैयार कर सके। बाद में कोई आपसे विकल्पों पर
+    बात करेगा। क्या हम कुछ और जानकारी के साथ आगे बढ़ें?
+  payment_refusal: >
+    मैं इस कॉल पर भुगतान या कार्ड की जानकारी नहीं ले सकती — यह आपकी सुरक्षा के
+    लिए इस लाइन पर संभव नहीं है। मैं आपको भुगतान विवरण खुद भरने के लिए एक सुरक्षित
+    लिंक भेजूंगी, और किसी और चीज़ में मदद के लिए किसी को आपसे जोड़ूंगी।
+  hard_refusal_close: >
+    समझ गई — बताने के लिए धन्यवाद। मैंने आपकी पसंद नोट कर ली है और इस बारे में
+    दोबारा कॉल नहीं करूंगी। आपका दिन शुभ हो।
+  busy_reschedule: >
+    कोई बात नहीं — मैं आपको जाने देती हूं। अगर सही लगे तो हम किसी और समय फिर
+    कोशिश कर सकते हैं।
+  confirmation_question: >
+    बस पुष्टि करने के लिए — मेरे पास अब सब कुछ है जो मुझे चाहिए। क्या मैं आपकी तुलना
+    जमा कर दूं?
+  confirmation_decline: "कोई बात नहीं — मैं कुछ भी जमा नहीं करूंगी। आपके समय के लिए धन्यवाद।"
+  capture_fallback_offer: >
+    मुझे इसे सही तरीके से समझने में थोड़ी दिक्कत हो रही है — याद दिला दूं, यह कॉल खासतौर पर आपकी
+    एनर्जी तुलना पूरी करने के लिए है, तो मुझे यह जानकारी चाहिए। आप इसे टाइप करके भी
+    बता सकते हैं, या मैं आपको किसी ऐसे व्यक्ति से जोड़ सकती हूं जो मदद कर सके।
+  field_reconfirm_template: "मैंने '{value}' सुना — क्या यह सही है?"
+  capture_soft_redirect_template: "कोई बात नहीं, {first_name} — चलिए इसे ठीक से जान लेते हैं। {question}"
+  generic_question_ack: >
+    अच्छा सवाल है — मैं CIMET की ओर से कॉल कर रही एक स्वचालित सहायक हूं, आपने जो एनर्जी
+    तुलना शुरू की थी उसी बारे में। यह कॉल गुणवत्ता और प्रशिक्षण उद्देश्यों के लिए रिकॉर्ड की जा रही है।
+  submission_success_template: >
+    हो गया — मैंने आपकी एनर्जी तुलना जमा कर दी है (संदर्भ {submission_id})। आपको जल्द
+    ही विकल्पों के बारे में बताया जाएगा। आपके समय के लिए धन्यवाद, {first_name}!
+
+# Translations for the canonical last_activity_date tokens used in the
+# consent opener — never interpolate raw English prose into this sentence.
+relative_date_labels:
+  TODAY: "आज"
+  YESTERDAY: "कल"
+  TWO_DAYS_AGO: "दो दिन पहले"
+  MONDAY: "सोमवार"
+  LAST_CALLBACK_ATTEMPT: "आपसे संपर्क करने के हमारे पिछले प्रयास"
+
+sections:
+  - name: IDENTITY
+    opening_line: "पहले कुछ जरूरी जानकारी की पुष्टि कर लेते हैं।"
+    fields: [full_name, date_of_birth]
+
+  - name: PROPERTY
+    opening_line: "अब उस प्रॉपर्टी के बारे में बात करते हैं जिसके लिए आप एनर्जी तुलना करवा रहे हैं।"
+    fields: [address, property_type]
+
+  - name: ENERGY_USAGE
+    opening_line: "आपके मौजूदा एनर्जी कनेक्शन के बारे में कुछ सवाल।"
+    fields: [current_provider, fuel_type, nmi_or_mirn, average_quarterly_usage]
+
+  - name: SAFETY_CONCESSION
+    opening_line: "बस दो जरूरी सवाल जो हमें सभी से पूछने होते हैं।"
+    fields: [concession_status, life_support_status]
+
+  - name: PREFERENCES
+    opening_line: "आखिरी बात — फॉलो-अप के लिए आपकी कोई पसंद?"
+    fields: [move_in_date, preferred_contact_time]
+
+fields:
+  full_name:
+    field: full_name
+    section: IDENTITY
+    purpose: Confirm the account holder's name for identity match.
+    question: "क्या आप खाते पर दर्ज पूरा नाम बता सकते हैं?"
+    clarification_question: "माफ कीजिए, क्या आप अपना पहला और अंतिम नाम स्पष्ट रूप से बता सकते हैं?"
+    validation:
+      type: non_empty
+    extraction_hints: ["a person's full name, first and last"]
+    max_retries: 2
+    required: true
+
+  date_of_birth:
+    field: date_of_birth
+    section: IDENTITY
+    purpose: Identity verification and concession eligibility.
+    question: "और आपकी जन्मतिथि, कृपया?"
+    clarification_question: "क्या आप वह दिन, महीना, और साल के रूप में बता सकते हैं?"
+    validation:
+      type: date
+    extraction_hints: ["a date of birth"]
+    max_retries: 2
+    required: true
+
+  address:
+    field: address
+    section: PROPERTY
+    purpose: Service address for the energy comparison.
+    question: "जिस प्रॉपर्टी के लिए हमें प्लान तुलना करनी है, उसका पता क्या है?"
+    clarification_question: "क्या आप मकान नंबर, सड़क का नाम, उपनगर, और पोस्टकोड बता सकते हैं?"
+    validation:
+      type: non_empty
+    extraction_hints: ["a street address including suburb and postcode"]
+    max_retries: 2
+    required: true
+
+  property_type:
+    field: property_type
+    section: PROPERTY
+    purpose: Residential vs business changes the plan set offered.
+    question: "क्या यह आवासीय है या व्यावसायिक प्रॉपर्टी?"
+    clarification_question: "बस स्पष्ट करने के लिए — क्या यह आपका घर है, या कोई व्यावसायिक जगह?"
+    validation:
+      type: enum
+      options: ["residential", "business"]
+    extraction_hints: ["residential or business"]
+    max_retries: 2
+    required: true
+
+  current_provider:
+    field: current_provider
+    section: ENERGY_USAGE
+    purpose: Baseline for the comparison.
+    question: "आपका मौजूदा एनर्जी प्रोवाइडर कौन है?"
+    clarification_question: "कोई बात नहीं — आप अभी अपना एनर्जी बिल किसे भरते हैं?"
+    validation:
+      type: non_empty
+    extraction_hints: ["the name of an energy retailer/company"]
+    max_retries: 2
+    required: true
+
+  fuel_type:
+    field: fuel_type
+    section: ENERGY_USAGE
+    purpose: Determines whether we ask for an NMI (electricity) or MIRN (gas).
+    question: "क्या प्रॉपर्टी में बिजली, गैस, या दोनों हैं?"
+    clarification_question: "सिर्फ बिजली, सिर्फ गैस, या दोनों — कौन सा है?"
+    validation:
+      type: enum
+      options: ["electricity", "gas", "dual"]
+    extraction_hints: ["electricity, gas, or dual/both"]
+    max_retries: 2
+    required: true
+
+  nmi_or_mirn:
+    field: nmi_or_mirn
+    section: ENERGY_USAGE
+    purpose: Meter identifier needed to generate an accurate comparison.
+    question: "क्या आपके पास NMI या MIRN नंबर उपलब्ध है — यह आपके हाल के बिल पर मीटर नंबर होता है?"
+    clarification_question: "यह आमतौर पर आपके बिल के ऊपर NMI या MIRN के नाम से 10-11 अंकों की संख्या होती है।"
+    validation:
+      type: non_empty
+    extraction_hints: ["a meter identifier, typically 10-11 digits/characters"]
+    max_retries: 1
+    required: false
+
+  average_quarterly_usage:
+    field: average_quarterly_usage
+    section: ENERGY_USAGE
+    purpose: Usage estimate improves comparison accuracy but isn't blocking.
+    question: "लगभग आपका औसत तिमाही बिल कितना आता है?"
+    clarification_question: "अनुमानित राशि भी ठीक है — क्या यह लगभग $200, $400, या $600+ के करीब है?"
+    validation:
+      type: non_empty
+    extraction_hints: ["a dollar amount or usage estimate"]
+    max_retries: 1
+    required: false
+
+  concession_status:
+    field: concession_status
+    section: SAFETY_CONCESSION
+    purpose: Regulatory requirement — concession eligibility affects plan eligibility.
+    question: "क्या आपके पास सरकारी रियायत कार्ड है?"
+    clarification_question: "यानी Pensioner Concession Card, Health Care Card या ऐसा ही कुछ — हां या नहीं?"
+    validation:
+      type: yes_no
+    extraction_hints: ["yes or no"]
+    max_retries: 2
+    required: true
+    safety_critical: false
+
+  life_support_status:
+    field: life_support_status
+    section: SAFETY_CONCESSION
+    purpose: >
+      Regulatory safety requirement. A "yes" here means the household depends on
+      life-support equipment — vulnerable-customer signal, must hand back to a human.
+    question: "क्या प्रॉपर्टी में कोई व्यक्ति जीवन-रक्षक उपकरण पर निर्भर है?"
+    clarification_question: "यह सिर्फ एक जरूरी सुरक्षा जांच है — हां या नहीं बताना काफी है।"
+    validation:
+      type: yes_no
+    extraction_hints: ["yes or no"]
+    max_retries: 2
+    required: true
+    safety_critical: true
+    escalate_on_values: ["yes"]
+
+  move_in_date:
+    field: move_in_date
+    section: PREFERENCES
+    purpose: Relevant only for a new connection.
+    question: "क्या यह नए मूव-इन के लिए है, या आपके मौजूदा पते के लिए?"
+    clarification_question: "अगर यह नया मूव-इन है, तो लगभग आप कब शिफ्ट हो रहे हैं?"
+    validation:
+      type: non_empty
+    extraction_hints: ["a date, or 'existing address' / 'not moving'"]
+    max_retries: 1
+    required: false
+
+  preferred_contact_time:
+    field: preferred_contact_time
+    section: PREFERENCES
+    purpose: Improves follow-up quality; not blocking.
+    question: "फॉलो-अप के लिए आपसे संपर्क करने का सबसे अच्छा समय कौन सा रहेगा?"
+    clarification_question: "सुबह, दोपहर, या शाम — जो भी आपके लिए आसान हो।"
+    validation:
+      type: non_empty
+    extraction_hints: ["a time of day or day of week preference"]
+    max_retries: 1
+    required: false

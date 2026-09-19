@@ -1,0 +1,233 @@
+# Dummy Energy dropout-recovery script — our own design, per the hackathon brief
+# ("draft your own dummy scripts... based on the call recording and field list").
+# Field names are cross-referenced against the Energy worked example in CIMET's
+# companion QA-Automation brief (address, DOB, email, NMI/MIRN, fuel type,
+# concession, life support, move-in date) so both briefs describe the same
+# underlying Energy journey shape. Replace with the real on-site field list
+# without touching any orchestration code — this file is the only place that changes.
+
+vertical: energy
+
+consent_line: >
+  Hi {first_name}, this is CIMET calling about the energy comparison you started
+  on {last_activity_date}. This call is recorded for quality and training purposes.
+  Are you okay for me to continue?
+
+handoff_line: >
+  I'm going to bring in a colleague who can help you directly — they'll have
+  everything we've covered so far, so you won't need to repeat anything.
+
+# Every other line the orchestrator can say. Kept here (not hardcoded in
+# Python) so the whole call — not just the field questions — runs in this
+# script's language. See app/models/script.py:PHRASE_DEFAULTS for the
+# English fallback if a key is ever missing from a script file.
+phrases:
+  consent_grant_ack: "Great, thank you."
+  resume_ack_with_prefill: >
+    Great, thank you — I can see we already have some of your details on file,
+    so I'll only ask what's still missing.
+  advice_refusal: >
+    I can't recommend a specific plan for you — I'm only able to collect your
+    details so our system can generate a comparison. Someone can talk through
+    the options with you afterwards. Shall we keep going with a few more details?
+  payment_refusal: >
+    I'm not able to take payment or card details over this call — that's not
+    something this line handles for your security. I'll send you a secure link
+    to enter your payment details yourself, and connect you with someone who
+    can help with anything else.
+  hard_refusal_close: >
+    Understood — thank you for letting me know. I've noted your preference and
+    I won't call again about this. Have a good day.
+  busy_reschedule: >
+    No worries at all — I'll let you go. We can try again another time if that
+    suits better.
+  confirmation_question: >
+    Just to confirm — I've got everything I need now. Shall I go ahead and
+    submit this comparison for you?
+  confirmation_decline: "No problem — I won't submit anything. Thanks for your time."
+  capture_fallback_offer: >
+    I'm having a bit of trouble catching that correctly — remember, this call is specifically
+    to finish your energy comparison, so I do need this to keep going. You're welcome to type it
+    in instead, or I can connect you with someone who can help.
+  field_reconfirm_template: "I heard '{value}' — is that correct?"
+  capture_soft_redirect_template: "No worries, {first_name} — let's get that sorted. {question}"
+  generic_question_ack: >
+    Good question — I'm an automated assistant calling on behalf of CIMET about the energy
+    comparison you started, and this call is recorded for quality and training purposes.
+  submission_success_template: >
+    All done — I've submitted your energy comparison (reference {submission_id}).
+    You'll hear back with your options shortly. Thanks for your time, {first_name}!
+
+sections:
+  - name: IDENTITY
+    opening_line: "Let's just confirm a few details first."
+    fields: [full_name, date_of_birth]
+
+  - name: PROPERTY
+    opening_line: "Now let's look at the property you're comparing energy for."
+    fields: [address, property_type]
+
+  - name: ENERGY_USAGE
+    opening_line: "A few questions about your current energy setup."
+    fields: [current_provider, fuel_type, nmi_or_mirn, average_quarterly_usage]
+
+  - name: SAFETY_CONCESSION
+    opening_line: "Just two important questions we're required to ask everyone."
+    fields: [concession_status, life_support_status]
+
+  - name: PREFERENCES
+    opening_line: "Last thing — any preference on how we follow up?"
+    fields: [move_in_date, preferred_contact_time]
+
+fields:
+  full_name:
+    field: full_name
+    section: IDENTITY
+    purpose: Confirm the account holder's name for identity match.
+    question: "Can you confirm the full name on the account?"
+    clarification_question: "Sorry, could you spell out your first and last name for me?"
+    validation:
+      type: non_empty
+    extraction_hints: ["a person's full name, first and last"]
+    max_retries: 2
+    required: true
+
+  date_of_birth:
+    field: date_of_birth
+    section: IDENTITY
+    purpose: Identity verification and concession eligibility.
+    question: "And your date of birth, please?"
+    clarification_question: "Could you give me that as day, month, and year?"
+    validation:
+      type: date
+    extraction_hints: ["a date of birth, e.g. '14th of March 1990' or '14/03/1990'"]
+    max_retries: 2
+    required: true
+
+  address:
+    field: address
+    section: PROPERTY
+    purpose: Service address for the energy comparison.
+    question: "What's the address for the property you'd like us to compare plans for?"
+    clarification_question: "Could you give me the street number, street name, suburb, and postcode?"
+    validation:
+      type: non_empty
+    extraction_hints: ["a street address including suburb and postcode"]
+    max_retries: 2
+    required: true
+
+  property_type:
+    field: property_type
+    section: PROPERTY
+    purpose: Residential vs business changes the plan set offered.
+    question: "Is that a residential or a business property?"
+    clarification_question: "Just to clarify — is this your home, or a business premises?"
+    validation:
+      type: enum
+      options: ["residential", "business"]
+    extraction_hints: ["residential or business"]
+    max_retries: 2
+    required: true
+
+  current_provider:
+    field: current_provider
+    section: ENERGY_USAGE
+    purpose: Baseline for the comparison.
+    question: "Who is your current energy provider?"
+    clarification_question: "No problem — who do you currently pay your energy bill to?"
+    validation:
+      type: non_empty
+    extraction_hints: ["the name of an energy retailer/company"]
+    max_retries: 2
+    required: true
+
+  fuel_type:
+    field: fuel_type
+    section: ENERGY_USAGE
+    purpose: Determines whether we ask for an NMI (electricity) or MIRN (gas).
+    question: "Is the property on electricity, gas, or both?"
+    clarification_question: "Just electricity, just gas, or dual fuel — which is it?"
+    validation:
+      type: enum
+      options: ["electricity", "gas", "dual"]
+    extraction_hints: ["electricity, gas, or dual/both"]
+    max_retries: 2
+    required: true
+
+  nmi_or_mirn:
+    field: nmi_or_mirn
+    section: ENERGY_USAGE
+    purpose: Meter identifier needed to generate an accurate comparison.
+    question: "Do you have your NMI or MIRN handy — that's the meter number on a recent bill?"
+    clarification_question: "It's usually an 10-11 digit number near the top of your bill labelled NMI or MIRN."
+    validation:
+      type: non_empty
+    extraction_hints: ["a meter identifier, typically 10-11 digits/characters"]
+    max_retries: 1
+    required: false
+
+  average_quarterly_usage:
+    field: average_quarterly_usage
+    section: ENERGY_USAGE
+    purpose: Usage estimate improves comparison accuracy but isn't blocking.
+    question: "Roughly what's your average quarterly bill?"
+    clarification_question: "Even a rough figure is fine — is it closer to $200, $400, or $600+?"
+    validation:
+      type: non_empty
+    extraction_hints: ["a dollar amount or usage estimate"]
+    max_retries: 1
+    required: false
+
+  concession_status:
+    field: concession_status
+    section: SAFETY_CONCESSION
+    purpose: Regulatory requirement — concession eligibility affects plan eligibility.
+    question: "Do you hold a government concession card?"
+    clarification_question: "That's a Pensioner Concession Card, Health Care Card, or similar — yes or no?"
+    validation:
+      type: yes_no
+    extraction_hints: ["yes or no"]
+    max_retries: 2
+    required: true
+    safety_critical: false
+
+  life_support_status:
+    field: life_support_status
+    section: SAFETY_CONCESSION
+    purpose: >
+      Regulatory safety requirement. A "yes" here means the household depends on
+      life-support equipment — this is a vulnerable-customer signal and the call
+      must be hand-backed to a human, not completed autonomously.
+    question: "Is there anyone at the property who relies on life-support equipment?"
+    clarification_question: "This is just a required safety check — yes or no is fine."
+    validation:
+      type: yes_no
+    extraction_hints: ["yes or no"]
+    max_retries: 2
+    required: true
+    safety_critical: true
+    escalate_on_values: ["yes"]
+
+  move_in_date:
+    field: move_in_date
+    section: PREFERENCES
+    purpose: Relevant only for a new connection.
+    question: "Is this for a new move-in, or your existing address?"
+    clarification_question: "If it's a new move-in, roughly when do you move in?"
+    validation:
+      type: non_empty
+    extraction_hints: ["a date, or 'existing address' / 'not moving'"]
+    max_retries: 1
+    required: false
+
+  preferred_contact_time:
+    field: preferred_contact_time
+    section: PREFERENCES
+    purpose: Improves follow-up quality; not blocking.
+    question: "Any preference on the best time to reach you if we need to follow up?"
+    clarification_question: "Morning, afternoon, or evening — whichever's easiest."
+    validation:
+      type: non_empty
+    extraction_hints: ["a time of day or day of week preference"]
+    max_retries: 1
+    required: false

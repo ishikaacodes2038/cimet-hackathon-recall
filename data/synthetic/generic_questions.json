@@ -1,0 +1,42 @@
+{
+  "_purpose": "Synthetic evaluation corpus for intent classification, generic-question handling in particular (see backend/tests/test_generic_question_handling.py, which runs every case below through classify_intent()). This is what 'training' means for a deterministic, keyword-based classifier with no live LLM key: not gradient descent, but a labeled corpus the keyword lists in app/services/llm_client.py::INTENT_KEYWORDS are checked and expanded against, so coverage is verifiable and regression-tested rather than a vibe. Utterances are realistic full sentences (not bare keywords) so the test proves substring matching still works with a keyword embedded naturally in surrounding words, not just against the literal keyword string.",
+  "generic_question": [
+    { "lang": "en", "text": "Wait, who are you exactly?" },
+    { "lang": "en", "text": "Sorry, who is this calling me?" },
+    { "lang": "en", "text": "Hold on, what is CIMET anyway?" },
+    { "lang": "en", "text": "Is this some kind of scam?" },
+    { "lang": "en", "text": "Honestly this sounds legit, is this real?" },
+    { "lang": "en", "text": "Am I talking to a robot right now?" },
+    { "lang": "en", "text": "Wait, are you a bot?" },
+    { "lang": "en", "text": "How did you get my number in the first place?" },
+    { "lang": "en", "text": "Why do you need my address for this?" },
+    { "lang": "en", "text": "What do you need this for exactly?" },
+    { "lang": "en", "text": "Roughly how long will this take, I'm a bit pressed for time?" },
+    { "lang": "en", "text": "OK sure but what happens after I give you all this?" },
+    { "lang": "en", "text": "I don't really get it, how does this work exactly?" },
+    { "lang": "en", "text": "Wait is this being recorded, why is this recorded?" },
+    { "lang": "en", "text": "Is this a call center you're calling from?" },
+    { "lang": "hi", "text": "रुकिए, आप कौन हैं?" },
+    { "lang": "hi", "text": "सीमेट क्या है, मुझे नहीं पता" },
+    { "lang": "hi", "text": "क्या यह धोखा है?" },
+    { "lang": "hi", "text": "आपको मेरा नंबर कैसे मिला?" },
+    { "lang": "hi", "text": "यह मेरा पता क्यों चाहिए?" },
+    { "lang": "hi", "text": "इसमें कितना समय लगेगा?" },
+    { "lang": "hi", "text": "यह कैसे काम करता है, समझाइए?" },
+    { "lang": "fil", "text": "Teka, sino ka nga pala?" },
+    { "lang": "fil", "text": "Ano ba ang CIMET?" },
+    { "lang": "fil", "text": "Scam ba ito?" },
+    { "lang": "fil", "text": "Robot ka ba?" },
+    { "lang": "fil", "text": "Paano mo nakuha ang number ko?" },
+    { "lang": "fil", "text": "Bakit mo kailangan ang address ko?" },
+    { "lang": "fil", "text": "Gaano katagal ito?" },
+    { "lang": "fil", "text": "Paano ito gumagana?" }
+  ],
+  "not_generic_question": [
+    { "lang": "en", "text": "Jordan Lee", "note": "a real answer must never be swallowed as a generic question" },
+    { "lang": "en", "text": "12 Smith Street, Richmond VIC 3121" },
+    { "lang": "en", "text": "which plan should I choose, what do you recommend?", "expected": "advice_request" },
+    { "lang": "en", "text": "can I speak to a real person please", "expected": "request_human" },
+    { "lang": "en", "text": "not interested, please stop calling me", "expected": "refuse_decline" }
+  ]
+}

@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>CIMET Energy Recovery — Quick Console (Node-free)</title>
+<style>
+  :root { --bg:#0f1222; --panel:#161a30; --border:#2a2f4d; --text:#e8e9f3; --muted:#9095b8;
+          --accent:#ff5a36; --green:#35d07f; --amber:#f5b942; --red:#ff5a5a; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font-family: "Segoe UI", system-ui, sans-serif; }
+  .topbar { padding:16px 24px; border-bottom:1px solid var(--border); }
+  .brand { font-weight:700; font-size:1.1rem; }
+  .subtitle { color:var(--muted); font-size:.85rem; }
+  .layout { display:grid; grid-template-columns:1.4fr 1fr; gap:16px; padding:16px; }
+  @media (max-width:900px){ .layout{ grid-template-columns:1fr; } }
+  .panel { background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:16px;
+           display:flex; flex-direction:column; gap:12px; min-width:0; }
+  .call-controls { display:flex; align-items:center; gap:10px; }
+  select, input, button { background:var(--bg); color:var(--text); border:1px solid var(--border);
+           border-radius:6px; padding:8px 10px; font-size:.9rem; font-family:inherit; }
+  button { cursor:pointer; background:var(--accent); border-color:var(--accent); color:#1a1a1a; font-weight:600; }
+  button:disabled { opacity:.5; cursor:not-allowed; }
+  .status-row { display:flex; gap:16px; font-size:.85rem; color:var(--muted); border-top:1px solid var(--border);
+           border-bottom:1px solid var(--border); padding:8px 0; flex-wrap:wrap; }
+  .transcript { flex:1; overflow-y:auto; max-height:50vh; display:flex; flex-direction:column; gap:8px; }
+  .turn { padding:8px 10px; border-radius:8px; font-size:.9rem; max-width:90%; }
+  .turn-agent { background:#1e2340; align-self:flex-start; }
+  .turn-customer { background:#23283f; align-self:flex-end; text-align:right; }
+  .turn-system { background:transparent; border:1px dashed var(--border); color:var(--muted); font-style:italic; align-self:center; }
+  .speaker { display:block; font-size:.65rem; letter-spacing:.05em; color:var(--muted); margin-bottom:2px; }
+  .event-tag { display:inline-block; margin-top:4px; font-size:.65rem; color:var(--accent); }
+  .input-row { display:flex; gap:8px; }
+  .input-row input { flex:1; }
+  .banner { padding:10px 12px; border-radius:8px; font-size:.85rem; }
+  .banner-blocked, .banner-error, .banner-escalated { background:#3a1620; border:1px solid var(--red); }
+  .banner-escalated { color:var(--red); font-weight:600; }
+  .banner-success, .banner-normal { background:#10301f; border:1px solid var(--green); }
+  .banner-normal { color:var(--green); display:inline-block; }
+  .banner-neutral { background:#23283f; }
+  .field-list { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:4px; font-size:.85rem; }
+  .field-list li { display:flex; justify-content:space-between; gap:8px; padding:6px 8px; border-radius:6px; background:var(--bg); }
+  .field-collected .field-name { color:var(--green); }
+  .field-skipped .field-name { color:var(--muted); }
+  .field-missing .field-name { color:var(--amber); }
+  .field-value { color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:45%; }
+  .field-confidence { color:var(--muted); }
+  .handoff-card { background:var(--bg); border:1px solid var(--red); border-radius:8px; padding:12px; font-size:.85rem; }
+  .handoff-card h4 { margin-top:0; color:var(--red); }
+  .empty { color:var(--muted); font-size:.85rem; }
+  .hint { color:var(--muted); font-size:.75rem; }
+  h3 { margin-bottom:4px; }
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="brand">CIMET — Energy Recovery Quick Console</div>
+    <div class="subtitle">Zero-build test harness (no Node required) — same API the real React console uses</div>
+  </div>
+
+  <div class="layout">
+    <section class="panel">
+      <div class="call-controls">
+        <label for="lead-select">Lead</label>
+        <select id="lead-select">
+          <option value="LEAD-1001">LEAD-1001 (Priya — has a prefilled name)</option>
+          <option value="LEAD-1002">LEAD-1002 (Alex — name + address prefilled)</option>
+          <option value="LEAD-1003">LEAD-1003 (DNC-listed — should be blocked)</option>
+          <option value="LEAD-1004">LEAD-1004 (Jordan — nothing prefilled)</option>
+        </select>
+        <button id="start-btn">Start recovery call</button>
+      </div>
+
+      <div id="banners"></div>
+
+      <div id="status-row" class="status-row" style="display:none"></div>
+      <div id="transcript" class="transcript"></div>
+
+      <form id="input-form" class="input-row" style="display:none">
+        <input id="input-text" placeholder="Type what the customer says..." autocomplete="off" />
+        <button type="submit">Send</button>
+      </form>
+      <div class="hint">Try: "Yes that's fine" · "can I speak to a real person" · "I've already told you three times, this is ridiculous!!" · "can I give you my card number, it's 4111 1111 1111 1111" · "not interested, stop calling me"</div>
+    </section>
+
+    <section class="panel">
+      <h3>Collected data</h3>
+      <ul id="field-list" class="field-list"><li class="empty">Start a call to see collected fields.</li></ul>
+
+      <h3>Escalation</h3>
+      <div id="escalation-banner" class="banner banner-normal">NORMAL</div>
+
+      <div id="handoff-card"></div>
+    </section>
+  </div>
+
+<script>
+const API_BASE = window.location.origin; // same-origin: served by the backend itself
+let sessionId = null;
+
+const el = (id) => document.getElementById(id);
+const startBtn = el('start-btn');
+const leadSelect = el('lead-select');
+const banners = el('banners');
+const statusRow = el('status-row');
+const transcript = el('transcript');
+const inputForm = el('input-form');
+const inputText = el('input-text');
+const fieldList = el('field-list');
+const escalationBanner = el('escalation-banner');
+const handoffCard = el('handoff-card');
+
+function banner(kind, html) {
+  banners.innerHTML = `<div class="banner banner-${kind}">${html}</div>`;
+}
+function clearBanners() { banners.innerHTML = ''; }
+
+function renderState(state) {
+  statusRow.style.display = 'flex';
+  statusRow.innerHTML = `
+    <span>LEAD: <strong>${state.lead_id}</strong></span>
+    <span>STATUS: <strong>${state.journey_status}</strong></span>
+    <span>STEP: <strong>${state.current_step}</strong></span>`;
+
+  transcript.innerHTML = state.conversation_history.map(t => `
+    <div class="turn turn-${t.speaker}">
+      <span class="speaker">${t.speaker.toUpperCase()}</span>
+      <span class="text">${escapeHtml(t.text)}</span>
+      ${t.event ? `<span class="event-tag">${t.event}</span>` : ''}
+    </div>`).join('');
+  transcript.scrollTop = transcript.scrollHeight;
+
+  const collectedEntries = Object.entries(state.collected_fields);
+  const rows = collectedEntries.map(([name, f]) => {
+    const skipped = f.value === '(not provided)';
+    return `<li class="${skipped ? 'field-skipped' : 'field-collected'}">
+      <span class="field-name">${skipped ? '○' : '✓'} ${name}</span>
+      <span class="field-value">${escapeHtml(f.value)}</span>
+      <span class="field-confidence">${Math.round(f.confidence * 100)}%</span>
+    </li>`;
+  }).concat(state.missing_fields.map(name => `<li class="field-missing">
+      <span class="field-name">⚠ ${name}</span><span class="field-value">pending</span></li>`));
+  fieldList.innerHTML = rows.join('') || '<li class="empty">No fields collected yet.</li>';
+
+  if (state.escalation_status) {
+    escalationBanner.className = 'banner banner-escalated';
+    escalationBanner.innerHTML = `🔴 HUMAN HANDOFF<div>Reason: ${state.escalation_reason}</div>`;
+  } else {
+    escalationBanner.className = 'banner banner-normal';
+    escalationBanner.textContent = 'NORMAL';
+  }
+
+  inputForm.style.display = state.journey_status === 'IN_PROGRESS' ? 'flex' : 'none';
+  if (state.journey_status === 'COMPLETED') {
+    banner('success', `✅ Journey submitted — reference ${state.submission_id}`);
+  } else if (state.journey_status === 'ENDED_BY_CUSTOMER') {
+    banner('neutral', "Call ended at the customer's request.");
+  }
+}
+
+async function fetchHandoff(handoffId) {
+  const resp = await fetch(`${API_BASE}/handoff/${handoffId}`);
+  if (!resp.ok) return;
+  const h = await resp.json();
+  handoffCard.innerHTML = `<div class="handoff-card">
+    <h4>Warm handoff context</h4>
+    <p><strong>Reason:</strong> ${h.reason} — ${escapeHtml(h.reason_detail)}</p>
+    <p><strong>Confidence:</strong> ${Math.round(h.confidence * 100)}%</p>
+    <p><strong>Summary:</strong> ${escapeHtml(h.conversation_summary)}</p>
+    <p><strong>Last message:</strong> "${escapeHtml(h.last_customer_message)}"</p>
+    <p><strong>Completed:</strong> ${Object.keys(h.completed_fields).join(', ') || 'none'}</p>
+    <p><strong>Missing:</strong> ${h.missing_fields.join(', ') || 'none'}</p>
+  </div>`;
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+startBtn.addEventListener('click', async () => {
+  clearBanners();
+  handoffCard.innerHTML = '';
+  startBtn.disabled = true;
+  try {
+    const resp = await fetch(`${API_BASE}/voice/session`, {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({lead_id: leadSelect.value}),
+    });
+    const body = await resp.json();
+    if (body.blocked) {
+      banner('blocked', `🚫 Call blocked before dialling — reason: <strong>${body.block_reason}</strong>`);
+      return;
+    }
+    sessionId = body.session_id;
+    renderState(body.state);
+  } catch (err) {
+    banner('error', String(err));
+  } finally {
+    startBtn.disabled = false;
+  }
+});
+
+inputForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const text = inputText.value.trim();
+  if (!sessionId || !text) return;
+  inputText.value = '';
+  try {
+    const resp = await fetch(`${API_BASE}/voice/message`, {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({session_id: sessionId, text}),
+    });
+    const body = await resp.json();
+    renderState(body.state);
+    if (body.turn.escalated && body.turn.handoff_id) {
+      await fetchHandoff(body.turn.handoff_id);
+    }
+  } catch (err) {
+    banner('error', String(err));
+  }
+});
+</script>
+</body>
+</html>

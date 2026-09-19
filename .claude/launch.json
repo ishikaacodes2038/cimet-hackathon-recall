@@ -1,0 +1,21 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "backend",
+      "runtimeExecutable": "C:\\Users\\ishika mittal\\AppData\\Local\\Programs\\Python\\Python39\\python.exe",
+      "runtimeArgs": ["-m", "uvicorn", "app.main:app", "--reload", "--port", "8000", "--app-dir", "C:\\Users\\ishika mittal\\OneDrive\\Documents\\cimet-energy-voice-agent\\backend"],
+      "port": 8000
+    },
+    {
+      "name": "frontend-vite",
+      "runtimeExecutable": "C:\\Program Files\\nodejs\\node.exe",
+      "runtimeArgs": [
+        "C:\\Users\\ishika mittal\\OneDrive\\Documents\\cimet-energy-voice-agent\\frontend\\node_modules\\vite\\bin\\vite.js",
+        "--root",
+        "C:\\Users\\ishika mittal\\OneDrive\\Documents\\cimet-energy-voice-agent\\frontend"
+      ],
+      "port": 5173
+    }
+  ]
+}
